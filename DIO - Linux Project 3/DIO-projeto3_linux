@@ -1,0 +1,109 @@
+
+
+#No Mysql
+CREATE TABLE dados (
+    produtoID int,
+    nome varchar(20),
+    preco varchar(20),
+    validade varchar(20),
+    host varchar(50)
+);
+
+#para instalar o python na máquina.
+apt-get install python3-pip
+
+#abrir o nano e inserir esse comando em linguagem de programação python.
+nano teste.py  
+
+print("Mensagem teste para ser armazenada no banco de dados") #essa mensagem será escrita dentro do nano.
+
+servername = "10.0.2.4/24"
+username = "root"
+password = "senha"
+database = "meubanco"
+
+#CRIANDO UM CONTAINER
+/var/lib/docker/volumes/app data #onde o container está espelhado.
+docker run --name web-server -dt -p 80:80 --mount type=volume,src =app,dst=/app/ webdevops/teste.py
+
+
+
+#INICIANDO UM SWARM (porta 2377)
+docker swarm init #inicia o serviço.
+ir na outra máquina e logar como root sudo su 
+
+
+
+#CRIANDO UM CLUSTER
+#cria o serviço,escolhe a opção para que sejam criadas 10 replicas, mesmo volume, aplicação continua no src.
+docker service create --name web-server --replicas 10 -dt -p 80:80 -mount type=volume,src=app,dst=/app/ webdevops/teste.py
+
+#mostra aonde foram aplicados os containers.
+docker service ps web-server 
+
+#REPLICANDO UM VOLUME DENTRO DO CLUSTER.
+apt-get install nfs-server #realcionado ao servidor.
+apt-get install nfs-common #relacionado ao cliente.
+
+#abrir o nano nesse diretório
+nano /etc/exports
+
+#todo mundo pode gravar,sincronizar e todas as pastas poderão ser checadas.
+/var/lib/docker/volumes/app/_data *(rw,sync,subtree_check) 
+CTRL + O e CTRL + X # salva o conteúdo e fecha o nano.
+
+#exportar a pasta
+exportfs -ar 
+
+#mostra o que está compartilhada no computador.
+showmount -e
+
+#replicar esse comando para poder rodar esse microserviço e neste ip.
+mount -o 172.31.0.127:/var/lib/docker/volumes/app_data /var/lib/docker/volumes/app/ data
+
+
+
+#CRIANDO UM PROXY com o uso do nginx
+mkdir /proxy #criando um diretório chamado proxy
+
+nano nginx.conf
+http {
+    upstream all{
+        server 172.31.0.127:80; #máquina1
+        server 172.31.0.189:80; #máquina2
+        server 172.31.0.240:80; #máquina3 
+    }
+
+    server{ 
+        listen 4500; #acessa o proxy por essa porta
+        location / {
+            proxy pass http://all/; #vai fazer isso para todos os ips
+
+        }
+    }
+}
+
+events { }
+CTRL + O e CTRL X #salva o arquivo e depois fecha o nano.
+
+nano dockerfile 
+
+FROM nginx
+COPY nginx.conf /etc/nginx/nginx.conf 
+
+CTRL + O e CTRL X #salva o arquivo e depois fecha o nano.
+
+#subir o container com essa aplicação que foi criada.
+docker build -t proxy-app .
+
+#mostra oque tem na máquina
+docker image ls
+
+#vai se chamar proxy-app e a porta de acesso é a 4500, só estará no primeiro host.
+docker container run --name my-proxy-app -dti -p 4500:4500 proxy-app 
+
+#lista os container onde estão
+docker container ls
+
+
+

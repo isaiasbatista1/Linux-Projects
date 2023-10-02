@@ -1,0 +1,51 @@
+
+cd /home/isaias #diretório 
+
+cd /scripts
+ls -a #comando no linux para listar tudo o que tem dentro deste local(aparece até os arquivos que estão ocultos)
+iac1.sh #nome arquivo 
+nano iac1.sh #nano é um editor de texto do linux
+
+#!/bin/bash
+
+echo "Criando diretórios"
+
+mkdir /publico
+mkdir /adm
+mkdir /ven
+mkdir /sec
+
+echo "Criando grupos de usuários"
+
+groupadd GRP_ADM
+groupadd GRP_VEN
+groupadd GRP_SEC
+
+echo "Criando usuários"
+
+#Caso o -crypt dê problema existe a possibilidade de usar -1 que é o tipo de criptografia MD5
+useradd carlos -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_ADM 
+useradd maria -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_ADM
+useradd joao -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_ADM
+
+useradd debora -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_VEN
+useradd sebastiana -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_VEN
+useradd roberto -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_VEN
+
+useradd josefina -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_SEC
+useradd amanda -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_SEC
+useradd rogerio -m -s /bin/bash -p $(openssl passwd -crypt Senha123) -G GRP_SEC
+
+echo "Especificando permissões aos diretórios"
+#Cada diretório tem sua peculiaridade. os usuários da administração se limitam a sua área e o mesmo princípio para os demais.
+chown root:ADM_GRP /adm
+chown root:ADM_VEN /ven
+chown root:ADM_SEC /sec
+
+#Podem ler,e gravar nos seus diretórios, acessa total para todos no diretório publico.
+chmod 770 /adm 
+chmod 770 /ven
+chmod 770 /sec
+chmod 777 /publico
+
+echo"Fim"
